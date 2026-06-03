@@ -404,7 +404,7 @@ export default function LoginPage() {
             {/* About footer */}
             <div className="card-footer">
               <p className="footer-label">💌 Made with love by</p>
-              <p className="footer-name">Erl Lourence Sabulbero</p>
+              <p className="footer-name">ELS</p>
               <p className="footer-desc">
                 "I built this app for my girlfriend because I wanted her to wake up every single day
                 knowing how deeply I love her — so I automated it, just for her." 🌹
