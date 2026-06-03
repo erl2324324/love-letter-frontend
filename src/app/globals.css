@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+  --rose: #e91e63;
+  --rose-dark: #c2185b;
+  --rose-light: #fce4ec;
+  --cream: #fff8f0;
+  --text: #3d1a26;
+}
+
+body {
+  background-color: var(--cream);
+  color: var(--text);
+}
