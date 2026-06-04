@@ -16,16 +16,28 @@ const TIMEZONES = [
 ];
 
 const MODES = [
-  { id: 'romantic', label: 'Romantic', emoji: '💕' },
-  { id: 'sweet', label: 'Sweet', emoji: '🍬' },
-  { id: 'long-distance', label: 'Long Distance', emoji: '✈️' },
-  { id: 'good-morning', label: 'Good Morning', emoji: '🌅' },
-  { id: 'good-night', label: 'Good Night', emoji: '🌙' },
-  { id: 'anniversary', label: 'Anniversary', emoji: '🎂' },
-  { id: 'appreciation', label: 'Appreciation', emoji: '🙏' },
-  { id: 'apology', label: 'Apology', emoji: '🕊️' },
-  { id: 'motivational', label: 'Motivational', emoji: '⚡' },
-  { id: 'surprise', label: 'Surprise', emoji: '🎁' },
+  { id: 'romantic',      label: 'Romantic',      emoji: '💕' },
+  { id: 'sweet',         label: 'Sweet',          emoji: '🍬' },
+  { id: 'long-distance', label: 'Long Distance',  emoji: '✈️' },
+  { id: 'good-morning',  label: 'Good Morning',   emoji: '🌅' },
+  { id: 'good-night',    label: 'Good Night',     emoji: '🌙' },
+  { id: 'anniversary',   label: 'Anniversary',    emoji: '🎂' },
+  { id: 'appreciation',  label: 'Appreciation',   emoji: '🙏' },
+  { id: 'apology',       label: 'Apology',        emoji: '🕊️' },
+  { id: 'motivational',  label: 'Motivational',   emoji: '⚡' },
+  { id: 'surprise',      label: 'Surprise',       emoji: '🎁' },
+];
+
+const DAYS = [
+  {l:'Sun',v:0},{l:'Mon',v:1},{l:'Tue',v:2},{l:'Wed',v:3},
+  {l:'Thu',v:4},{l:'Fri',v:5},{l:'Sat',v:6}
+];
+
+const SCHEDULE_TYPES = [
+  { id: 'daily',   label: '📅 Every Day' },
+  { id: 'weekly',  label: '📆 Specific Days' },
+  { id: 'monthly', label: '🗓️ Monthly' },
+  { id: 'once',    label: '🎯 One-Time' },
 ];
 
 export default function SettingsPage() {
@@ -37,10 +49,16 @@ export default function SettingsPage() {
     delivery_address: '',
     schedule_time: '08:00',
     schedule_timezone: 'Asia/Manila',
+    schedule_type: 'daily',
+    days_of_week: [0,1,2,3,4,5,6],
+    specific_date: '',
+    monthly_day: 1,
     use_emojis: true,
     generation_mode: 'romantic',
     generation_type: 'A',
-    personal_details: { memories: '', nicknames: '', inside_jokes: '', how_we_met: '', special_dates: '' },
+    personal_details: {
+      memories: '', nicknames: '', inside_jokes: '', how_we_met: '', special_dates: ''
+    },
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -65,10 +83,16 @@ export default function SettingsPage() {
         delivery_address: s.delivery_address || '',
         schedule_time: s.schedule_time?.slice(0,5) || '08:00',
         schedule_timezone: s.schedule_timezone || 'Asia/Manila',
+        schedule_type: s.schedule_type || 'daily',
+        days_of_week: s.days_of_week || [0,1,2,3,4,5,6],
+        specific_date: s.specific_date?.slice(0,10) || '',
+        monthly_day: s.monthly_day || 1,
         use_emojis: s.use_emojis ?? true,
         generation_mode: s.generation_mode || 'romantic',
         generation_type: s.generation_type || 'A',
-        personal_details: s.personal_details || { memories: '', nicknames: '', inside_jokes: '', how_we_met: '', special_dates: '' },
+        personal_details: s.personal_details || {
+          memories: '', nicknames: '', inside_jokes: '', how_we_met: '', special_dates: ''
+        },
       });
     } catch {}
     finally { setLoading(false); }
@@ -94,11 +118,21 @@ export default function SettingsPage() {
     } finally { setTesting(false); }
   };
 
+  const toggleDay = (val) => {
+    const days = form.days_of_week || [];
+    setForm({
+      ...form,
+      days_of_week: days.includes(val)
+        ? days.filter(x => x !== val)
+        : [...days, val].sort()
+    });
+  };
+
   const currentPlatform = PLATFORMS.find(p => p.id === form.delivery_platform);
 
   if (loading) return (
     <div style={{ minHeight:'100vh', background:'#1a0a0f', display:'flex', alignItems:'center', justifyContent:'center' }}>
-      <span style={{ fontSize:'2rem', animation:'spin 1s linear infinite' }}>💌</span>
+      <span style={{ fontSize:'2rem' }}>💌</span>
     </div>
   );
 
@@ -107,21 +141,17 @@ export default function SettingsPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
         * { box-sizing: border-box; }
-
         .settings-root {
           min-height: 100vh;
-          min-height: 100dvh;
           background: #1a0a0f;
           font-family: 'DM Sans', sans-serif;
           color: #fff;
           padding-bottom: 5rem;
         }
-
         .nav {
           position: sticky; top: 0; z-index: 100;
           background: rgba(26,10,15,0.9);
           backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
           border-bottom: 1px solid rgba(194,24,91,0.2);
           padding: 0 1rem; height: 60px;
           display: flex; align-items: center; justify-content: space-between;
@@ -139,16 +169,13 @@ export default function SettingsPage() {
           padding: 0.45rem 0.9rem; border-radius: 50px;
           font-size: 0.8rem; font-family: 'DM Sans', sans-serif;
           cursor: pointer; transition: all 0.2s;
-          -webkit-tap-highlight-color: transparent;
         }
         .back-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
-
         .content {
           max-width: 680px; margin: 0 auto;
           padding: 1.5rem 1rem;
           display: flex; flex-direction: column; gap: 1.25rem;
         }
-
         .section {
           background: rgba(255,255,255,0.04);
           border: 1px solid rgba(255,255,255,0.08);
@@ -160,7 +187,6 @@ export default function SettingsPage() {
           font-weight: 600; margin-bottom: 1rem;
           display: flex; align-items: center; gap: 0.5rem;
         }
-
         .field { margin-bottom: 1rem; }
         .field:last-child { margin-bottom: 0; }
         .field label {
@@ -185,11 +211,8 @@ export default function SettingsPage() {
         }
         .field select option { background: #2d0a18; color: #fff; }
         .field textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
-
         .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
         @media (max-width: 400px) { .two-col { grid-template-columns: 1fr; } }
-
-        /* Platform buttons */
         .platform-grid {
           display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem;
           margin-bottom: 1rem;
@@ -204,17 +227,46 @@ export default function SettingsPage() {
           font-family: 'DM Sans', sans-serif;
           color: rgba(255,255,255,0.5);
           transition: all 0.2s;
-          -webkit-tap-highlight-color: transparent;
         }
         .platform-btn.active {
           background: linear-gradient(135deg, rgba(136,14,79,0.5), rgba(233,30,99,0.3));
           border-color: rgba(233,30,99,0.6); color: #fff;
         }
-        .platform-btn:hover:not(.active) { background: rgba(194,24,91,0.12); border-color: rgba(194,24,91,0.25); }
         .platform-emoji { font-size: 1.3rem; }
         .platform-label { font-size: 0.72rem; font-weight: 500; }
-
-        /* Mode grid */
+        .schedule-type-grid {
+          display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem;
+          margin-top: 0.5rem;
+        }
+        .schedule-type-btn {
+          padding: 0.75rem;
+          background: rgba(255,255,255,0.05);
+          border: 1.5px solid rgba(255,255,255,0.08);
+          border-radius: 12px; cursor: pointer;
+          font-family: 'DM Sans', sans-serif;
+          color: rgba(255,255,255,0.5);
+          font-size: 0.82rem; font-weight: 500;
+          transition: all 0.2s; text-align: center;
+        }
+        .schedule-type-btn.active {
+          background: linear-gradient(135deg, rgba(136,14,79,0.5), rgba(233,30,99,0.3));
+          border-color: rgba(233,30,99,0.6); color: #fff;
+        }
+        .days-grid {
+          display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;
+        }
+        .day-btn {
+          width: 42px; height: 42px; border-radius: 50%;
+          background: rgba(255,255,255,0.07);
+          border: 1.5px solid rgba(255,255,255,0.1);
+          color: rgba(255,255,255,0.4);
+          font-size: 0.72rem; font-weight: 600; cursor: pointer;
+          font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+        }
+        .day-btn.active {
+          background: linear-gradient(135deg,#c2185b,#e91e63);
+          border-color: #e91e63; color: #fff;
+        }
         .mode-grid {
           display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;
         }
@@ -227,9 +279,7 @@ export default function SettingsPage() {
           border: 1.5px solid rgba(255,255,255,0.08);
           border-radius: 12px; cursor: pointer;
           font-family: 'DM Sans', sans-serif;
-          color: rgba(255,255,255,0.5);
-          transition: all 0.2s;
-          -webkit-tap-highlight-color: transparent;
+          color: rgba(255,255,255,0.5); transition: all 0.2s;
         }
         .mode-btn.active {
           background: linear-gradient(135deg, rgba(136,14,79,0.5), rgba(233,30,99,0.3));
@@ -237,8 +287,6 @@ export default function SettingsPage() {
         }
         .mode-emoji { font-size: 1.1rem; }
         .mode-label { font-size: 0.68rem; font-weight: 500; text-align: center; }
-
-        /* Toggle row */
         .toggle-row {
           display: flex; align-items: center; justify-content: space-between;
           padding: 0.5rem 0;
@@ -250,7 +298,6 @@ export default function SettingsPage() {
           background: rgba(255,255,255,0.1);
           border-radius: 50px; cursor: pointer; border: none;
           position: relative; transition: background 0.3s;
-          -webkit-tap-highlight-color: transparent;
         }
         .toggle.on { background: linear-gradient(135deg, #c2185b, #e91e63); }
         .toggle::after {
@@ -260,15 +307,12 @@ export default function SettingsPage() {
           box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }
         .toggle.on::after { transform: translateX(22px); }
-
-        /* Gen type */
         .gen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
         .gen-btn {
           padding: 0.9rem; background: rgba(255,255,255,0.05);
           border: 1.5px solid rgba(255,255,255,0.08);
           border-radius: 12px; cursor: pointer; text-align: left;
           font-family: 'DM Sans', sans-serif; transition: all 0.2s;
-          -webkit-tap-highlight-color: transparent;
         }
         .gen-btn.active {
           background: linear-gradient(135deg, rgba(136,14,79,0.5), rgba(233,30,99,0.3));
@@ -277,21 +321,16 @@ export default function SettingsPage() {
         .gen-emoji { font-size: 1.2rem; display: block; margin-bottom: 0.25rem; }
         .gen-title { font-size: 0.85rem; font-weight: 600; color: #fff; display: block; }
         .gen-desc { font-size: 0.72rem; color: rgba(255,255,255,0.4); display: block; margin-top: 0.15rem; }
-
-        /* Buttons */
         .save-btn {
           width: 100%; padding: 1rem;
           background: linear-gradient(135deg, #880e4f, #c2185b, #e91e63);
           border: none; border-radius: 14px; color: #fff;
           font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 600;
           cursor: pointer; box-shadow: 0 6px 24px rgba(233,30,99,0.35);
-          transition: all 0.2s; letter-spacing: 0.02em;
-          -webkit-tap-highlight-color: transparent;
+          transition: all 0.2s;
         }
-        .save-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(233,30,99,0.45); }
-        .save-btn:active:not(:disabled) { transform: scale(0.98); }
+        .save-btn:hover:not(:disabled) { transform: translateY(-2px); }
         .save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
         .test-btn {
           width: 100%; padding: 0.9rem;
           background: rgba(255,255,255,0.07);
@@ -299,12 +338,9 @@ export default function SettingsPage() {
           border-radius: 14px; color: rgba(255,255,255,0.7);
           font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500;
           cursor: pointer; transition: all 0.2s; margin-top: 0.75rem;
-          -webkit-tap-highlight-color: transparent;
         }
         .test-btn:hover:not(:disabled) { background: rgba(255,255,255,0.12); color: #fff; }
         .test-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        /* About card */
         .about-card {
           background: linear-gradient(135deg, rgba(136,14,79,0.2), rgba(194,24,91,0.1));
           border: 1px solid rgba(194,24,91,0.25);
@@ -313,12 +349,9 @@ export default function SettingsPage() {
         .about-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(244,143,177,0.6); font-weight: 600; }
         .about-name {
           font-family: 'Playfair Display', serif;
-          font-size: 1.25rem; color: #f48fb1; font-style: italic;
-          margin: 0.4rem 0;
+          font-size: 1.25rem; color: #f48fb1; font-style: italic; margin: 0.4rem 0;
         }
         .about-desc { font-size: 0.82rem; color: rgba(255,255,255,0.45); line-height: 1.7; }
-
-        /* Toast */
         .toast {
           position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
           z-index: 999; padding: 0.75rem 1.25rem; border-radius: 50px;
@@ -329,6 +362,7 @@ export default function SettingsPage() {
         .toast.success { background: rgba(34,197,94,0.2); border: 1px solid rgba(34,197,94,0.4); color: #86efac; backdrop-filter: blur(10px); }
         .toast.error { background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #fca5a5; backdrop-filter: blur(10px); }
         @keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(10px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+        .date-input::-webkit-calendar-picker-indicator { filter: invert(1); }
       `}</style>
 
       <div className="settings-root">
@@ -338,6 +372,7 @@ export default function SettingsPage() {
         </nav>
 
         <div className="content">
+
           {/* Recipient */}
           <div className="section">
             <div className="section-title">💕 Recipient</div>
@@ -380,7 +415,9 @@ export default function SettingsPage() {
           {/* Schedule */}
           <div className="section">
             <div className="section-title">⏰ Schedule</div>
-            <div className="two-col">
+
+            {/* Time & Timezone */}
+            <div className="two-col" style={{marginBottom:'1rem'}}>
               <div className="field">
                 <label>Send Time</label>
                 <input type="time" value={form.schedule_time}
@@ -394,13 +431,80 @@ export default function SettingsPage() {
                 </select>
               </div>
             </div>
+
+            {/* Schedule Type */}
+            <div className="field">
+              <label>Schedule Type</label>
+              <div className="schedule-type-grid">
+                {SCHEDULE_TYPES.map(t => (
+                  <button key={t.id}
+                    className={`schedule-type-btn ${form.schedule_type === t.id ? 'active' : ''}`}
+                    onClick={() => setForm({...form, schedule_type: t.id})}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Weekly - Days */}
+            {form.schedule_type === 'weekly' && (
+              <div className="field">
+                <label>Days to Send</label>
+                <div className="days-grid">
+                  {DAYS.map(d => (
+                    <button key={d.v}
+                      className={`day-btn ${(form.days_of_week || []).includes(d.v) ? 'active' : ''}`}
+                      onClick={() => toggleDay(d.v)}>
+                      {d.l}
+                    </button>
+                  ))}
+                </div>
+                <p style={{fontSize:'0.75rem', color:'rgba(255,255,255,0.3)', marginTop:'0.5rem'}}>
+                  {(form.days_of_week || []).length === 0 ? 'No days selected' :
+                   DAYS.filter(d => (form.days_of_week || []).includes(d.v)).map(d => d.l).join(', ')}
+                </p>
+              </div>
+            )}
+
+            {/* Monthly */}
+            {form.schedule_type === 'monthly' && (
+              <div className="field">
+                <label>Day of Month</label>
+                <select value={form.monthly_day || 1}
+                  onChange={e => setForm({...form, monthly_day: parseInt(e.target.value)})}>
+                  {Array.from({length:28},(_,i)=>i+1).map(d => (
+                    <option key={d} value={d} style={{background:'#2d0a18'}}>
+                      Every {d}{d===1?'st':d===2?'nd':d===3?'rd':'th'} of the month
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Once */}
+            {form.schedule_type === 'once' && (
+              <div className="field">
+                <label>Specific Date</label>
+                <input type="date" className="date-input"
+                  value={form.specific_date || ''}
+                  min={new Date().toISOString().slice(0,10)}
+                  onChange={e => setForm({...form, specific_date: e.target.value})} />
+                {form.specific_date && (
+                  <p style={{fontSize:'0.75rem', color:'#f48fb1', marginTop:'0.4rem'}}>
+                    📅 Will send on {new Date(form.specific_date + 'T00:00:00').toLocaleDateString('en-PH', {weekday:'long', year:'numeric', month:'long', day:'numeric'})}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Letter preferences */}
+          {/* Letter Preferences */}
           <div className="section">
             <div className="section-title">✍️ Letter Preferences</div>
             <div style={{marginBottom:'1rem'}}>
-              <div className="section-title" style={{marginBottom:'0.75rem'}}>Default Mode</div>
+              <div style={{fontSize:'0.7rem', textTransform:'uppercase', letterSpacing:'0.08em', color:'rgba(244,143,177,0.7)', fontWeight:600, marginBottom:'0.75rem'}}>
+                Default Mode
+              </div>
               <div className="mode-grid">
                 {MODES.map(m => (
                   <button key={m.id} className={`mode-btn ${form.generation_mode === m.id ? 'active' : ''}`}
@@ -435,14 +539,14 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Personal details */}
+          {/* Personal Details */}
           <div className="section">
             <div className="section-title">💌 Personal Details (for Personalized mode)</div>
             {[
-              { key: 'memories', label: 'Memories', placeholder: 'Our first date at the park...' },
-              { key: 'inside_jokes', label: 'Inside Jokes', placeholder: 'That time we got lost looking for coffee...' },
-              { key: 'how_we_met', label: 'How We Met', placeholder: 'We met at school in 2022...' },
-              { key: 'special_dates', label: 'Special Dates', placeholder: 'Anniversary: June 14, her birthday: Dec 25...' },
+              { key: 'memories',     label: 'Memories',     placeholder: 'Our first date at the park...' },
+              { key: 'inside_jokes', label: 'Inside Jokes',  placeholder: 'That time we got lost looking for coffee...' },
+              { key: 'how_we_met',   label: 'How We Met',    placeholder: 'We met at school in 2022...' },
+              { key: 'special_dates',label: 'Special Dates', placeholder: 'Anniversary: June 14, her birthday: Dec 25...' },
             ].map(f => (
               <div className="field" key={f.key}>
                 <label>{f.label}</label>
@@ -456,7 +560,7 @@ export default function SettingsPage() {
             ))}
           </div>
 
-          {/* Save */}
+          {/* Save & Test */}
           <div>
             <button className="save-btn" onClick={save} disabled={saving}>
               {saving ? '💫 Saving...' : '💾 Save Settings'}
@@ -475,6 +579,7 @@ export default function SettingsPage() {
               knowing how deeply I love her — so I automated it, just for her." 🌹
             </p>
           </div>
+
         </div>
       </div>
 
