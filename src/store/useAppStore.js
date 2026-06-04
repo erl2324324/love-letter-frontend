@@ -1,9 +1,9 @@
 import { create } from 'zustand';
 
 const useAppStore = create((set) => ({
-  // Auth
+  // Auth — restore token from localStorage on init
   user: null,
-  token: null,
+  token: typeof window !== 'undefined' ? localStorage.getItem('ll_token') : null,
   setUser: (user) => set({ user }),
   setToken: (token) => {
     if (token) localStorage.setItem('ll_token', token);
